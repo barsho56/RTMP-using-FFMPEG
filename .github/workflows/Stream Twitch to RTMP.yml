@@ -1,0 +1,55 @@
+name: Stream Twitch to RTMP
+
+on:
+  workflow_dispatch:
+    inputs:
+      twitch_channel:
+        description: 'Twitch channel to stream from'
+        required: true
+        default: 'channelname'
+      stream_quality:
+        description: 'Stream quality (best/1080p60/720p60/480p/360p)'
+        required: true
+        default: 'best'
+      duration:
+        description: 'Stream duration in seconds (0 = infinite)'
+        required: false
+        default: '0'
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max
+
+    steps:
+      - name: Install Streamlink and FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y streamlink ffmpeg
+          streamlink --version
+          ffmpeg -version
+
+      - name: Start streaming
+        env:
+          RTMP_DEST: ${{ secrets.RTMP_DEST }}
+        run: |
+          # Stream from Twitch to RTMP using Streamlink and FFmpeg
+          streamlink \
+            --stream-url \
+            "https://twitch.tv/${{ github.event.inputs.twitch_channel }}" \
+            ${{ github.event.inputs.stream_quality }} | \
+          ffmpeg \
+            -re \
+            -i pipe:0 \
+            -c:v libx264 \
+            -preset veryfast \
+            -maxrate 3000k \
+            -bufsize 6000k \
+            -pix_fmt yuv420p \
+            -g 50 \
+            -c:a aac \
+            -b:a 160k \
+            -ar 44100 \
+            -f flv \
+            -flvflags no_duration_filesize \
+            "$RTMP_DEST"
