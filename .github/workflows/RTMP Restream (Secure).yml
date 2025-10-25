@@ -1,0 +1,55 @@
+name: RTMP Restream (Secure)
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Stream duration in seconds (0 for unlimited)'
+        required: false
+        default: '0'
+
+jobs:
+  restream:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          
+      - name: Validate Secrets
+        env:
+          SOURCE_URL: ${{ secrets.SOURCE_RTMP_URL }}
+          DEST_URL: ${{ secrets.DESTINATION_RTMP_URL }}
+        run: |
+          if [ -z "$SOURCE_URL" ]; then
+            echo "ERROR: SOURCE_RTMP_URL secret is not set!"
+            echo "Go to Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+          
+          if [ -z "$DEST_URL" ]; then
+            echo "ERROR: DESTINATION_RTMP_URL secret is not set!"
+            echo "Go to Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+          
+          echo "✓ Secrets are configured"
+          
+      - name: Start RTMP Restream
+        env:
+          SOURCE_URL: ${{ secrets.SOURCE_RTMP_URL }}
+          DEST_URL: ${{ secrets.DESTINATION_RTMP_URL }}
+        run: |
+          DURATION="${{ github.event.inputs.duration }}"
+          
+          echo "Starting secure restream..."
+          echo "Source: (hidden)"
+          echo "Destination: (hidden)"
+          
+          if [ "$DURATION" = "0" ]; then
+            ffmpeg -re -i "$SOURCE_URL" -c copy -f flv "$DEST_URL"
+          else
+            timeout "$DURATION" ffmpeg -re -i "$SOURCE_URL" -c copy -f flv "$DEST_URL" || true
+          fi
