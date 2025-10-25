@@ -20,7 +20,7 @@ jobs:
   stream:
     runs-on: ubuntu-latest
     timeout-minutes: 360  # 6 hours max
-    
+
     steps:
       - name: Install Streamlink and FFmpeg
         run: |
@@ -33,11 +33,9 @@ jobs:
         env:
           RTMP_DEST: ${{ secrets.RTMP_DEST }}
         run: |
-          # Stream from Twitch to RTMP using Streamlink and FFmpeg
           streamlink \
-            --stream-url \
             "https://twitch.tv/${{ github.event.inputs.twitch_channel }}" \
-            ${{ github.event.inputs.stream_quality }} | \
+            ${{ github.event.inputs.stream_quality }} -O | \
           ffmpeg \
             -re \
             -i pipe:0 \
