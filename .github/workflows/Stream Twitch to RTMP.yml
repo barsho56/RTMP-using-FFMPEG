@@ -6,7 +6,7 @@ on:
       twitch_channel:
         description: 'Twitch channel to stream from'
         required: true
-        default: 'channelname'
+        default: 'barsho56'
       stream_quality:
         description: 'Stream quality (best/1080p60/720p60/480p/360p)'
         required: true
